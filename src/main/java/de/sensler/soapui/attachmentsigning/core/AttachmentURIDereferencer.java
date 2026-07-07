@@ -16,14 +16,19 @@ import java.util.Map;
 
 /**
  * Resolves the "cid:" URIs used by {@code ds:Reference} elements that sign attachments to the
- * actual attachment bytes, keyed by (unbracketed) Content-ID.
+ * actual attachment bytes, keyed by (unbracketed) Content-ID. Any other URI (same-document
+ * fragment references such as the Body's or a Timestamp's {@code "#id-..."}, used when also
+ * signing the message per {@link AttachmentSigner}) is delegated to the JSR 105 provider's own
+ * default dereferencer - this class only special-cases what it actually understands.
  */
 public class AttachmentURIDereferencer implements URIDereferencer {
 
     private final Map<String, Attachment> attachmentsByContentId;
+    private final URIDereferencer fallback;
 
-    public AttachmentURIDereferencer(Map<String, Attachment> attachmentsByContentId) {
+    public AttachmentURIDereferencer(Map<String, Attachment> attachmentsByContentId, URIDereferencer fallback) {
         this.attachmentsByContentId = attachmentsByContentId;
+        this.fallback = fallback;
     }
 
     public static String normalizeContentId(String contentId) {
@@ -50,7 +55,7 @@ public class AttachmentURIDereferencer implements URIDereferencer {
     public Data dereference(URIReference reference, XMLCryptoContext context) throws URIReferenceException {
         String uri = reference.getURI();
         if (uri == null || !uri.startsWith("cid:")) {
-            throw new URIReferenceException("Unsupported URI for attachment signing: " + uri);
+            return fallback.dereference(reference, context);
         }
 
         String cid;

@@ -42,6 +42,7 @@ public class SigningConfigDialog extends JDialog {
     private JTextField aliasField;
     private JPasswordField passwordField;
     private JComboBox<SwaTransformType> transformCombo;
+    private JCheckBox includeBodyAndTimestampCheckBox;
     private JCheckBox autoSignCheckBox;
     private List<JCheckBox> attachmentCheckBoxes = new ArrayList<>();
 
@@ -125,6 +126,13 @@ public class SigningConfigDialog extends JDialog {
         c.gridx = 0;
         c.gridy = row;
         c.gridwidth = 2;
+        includeBodyAndTimestampCheckBox = new JCheckBox("Also sign message Body + Timestamp (standard WS-Security, "
+                + "combined into the same signature)");
+        form.add(includeBodyAndTimestampCheckBox, c);
+        row++;
+
+        c.gridx = 0;
+        c.gridy = row;
         autoSignCheckBox = new JCheckBox("Automatically sign every attachment on every send (whole project)");
         form.add(autoSignCheckBox, c);
         row++;
@@ -161,6 +169,7 @@ public class SigningConfigDialog extends JDialog {
         aliasField.setText(SigningConfig.get(project, SigningConfig.ALIAS, ""));
         passwordField.setText(SigningConfig.get(project, SigningConfig.PASSWORD, ""));
         transformCombo.setSelectedItem(SigningConfig.getTransformType(project));
+        includeBodyAndTimestampCheckBox.setSelected(SigningConfig.isIncludeBodyAndTimestamp(project));
         autoSignCheckBox.setSelected(SigningConfig.isAutoSignEnabled(project));
     }
 
@@ -169,6 +178,8 @@ public class SigningConfigDialog extends JDialog {
         SigningConfig.set(project, SigningConfig.ALIAS, aliasField.getText());
         SigningConfig.set(project, SigningConfig.PASSWORD, new String(passwordField.getPassword()));
         SigningConfig.set(project, SigningConfig.TRANSFORM, ((SwaTransformType) transformCombo.getSelectedItem()).name());
+        SigningConfig.set(project, SigningConfig.INCLUDE_BODY_TIMESTAMP,
+                Boolean.toString(includeBodyAndTimestampCheckBox.isSelected()));
         SigningConfig.set(project, SigningConfig.AUTO_SIGN, Boolean.toString(autoSignCheckBox.isSelected()));
     }
 
@@ -197,11 +208,13 @@ public class SigningConfigDialog extends JDialog {
             UISupport.setHourglassCursor();
             String signed = AttachmentSigner.sign(request, wssCrypto, aliasField.getText(),
                     new String(passwordField.getPassword()),
-                    (SwaTransformType) transformCombo.getSelectedItem(), selectedContentIds);
+                    (SwaTransformType) transformCombo.getSelectedItem(), selectedContentIds,
+                    includeBodyAndTimestampCheckBox.isSelected());
             request.setRequestContent(signed);
-            UISupport.showInfoMessage("Signed " + selectedContentIds.size() + " attachment(s).");
-        } catch (Exception e) {
-            UISupport.showErrorMessage(e);
+            UISupport.showInfoMessage("Signed " + selectedContentIds.size() + " attachment(s)"
+                    + (includeBodyAndTimestampCheckBox.isSelected() ? " plus Body + Timestamp." : "."));
+        } catch (Throwable e) {
+            UISupport.showErrorMessage(e.toString());
         } finally {
             UISupport.resetCursor();
         }

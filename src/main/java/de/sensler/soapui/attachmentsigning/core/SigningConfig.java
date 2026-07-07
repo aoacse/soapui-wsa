@@ -21,6 +21,7 @@ public final class SigningConfig {
     public static final String PASSWORD = PREFIX + "password";
     public static final String TRANSFORM = PREFIX + "transform";
     public static final String AUTO_SIGN = PREFIX + "autoSign";
+    public static final String INCLUDE_BODY_TIMESTAMP = PREFIX + "includeBodyAndTimestamp";
 
     private SigningConfig() {
     }
@@ -39,6 +40,10 @@ public final class SigningConfig {
 
     public static boolean isAutoSignEnabled(WsdlProject project) {
         return Boolean.parseBoolean(get(project, AUTO_SIGN, "false"));
+    }
+
+    public static boolean isIncludeBodyAndTimestamp(WsdlProject project) {
+        return Boolean.parseBoolean(get(project, INCLUDE_BODY_TIMESTAMP, "false"));
     }
 
     public static SwaTransformType getTransformType(WsdlProject project) {

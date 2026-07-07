@@ -3,7 +3,10 @@
 Signs the MIME/MTOM attachments of a SOAP request with an XML signature, following the
 [WS-Security SOAP-with-Attachments (SwA) Profile 1.1](http://docs.oasis-open.org/wss/oasis-wss-SwAProfile-1.1).
 The result is a standard `wsse:Security` header containing an X.509 `BinarySecurityToken` and a
-`ds:Signature` with one `ds:Reference` per signed attachment (`URI="cid:..."`).
+`ds:Signature` with one `ds:Reference` per signed attachment (`URI="cid:..."`). Optionally, the
+same signature can also cover the SOAP Body and a `wsu:Timestamp` - the same scope SoapUI's
+built-in "Sign" + "Timestamp" Outgoing WSS entries cover - so you don't need to configure and apply
+both mechanisms separately.
 
 It plugs into the free/open-source **SoapUI** (not ReadyAPI) using SoapUI's public plugin API
 (`com.eviware.soapui.plugins`).
@@ -25,6 +28,10 @@ It plugs into the free/open-source **SoapUI** (not ReadyAPI) using SoapUI's publ
     interoperable.
   - **Complete**: digests a reconstructed MIME entity (headers + payload). Matches the SwA profile's
     "Complete" transform, but is fragile - see *Limitations* below.
+- Optional **"Also sign message Body + Timestamp"** checkbox: adds (or reuses) a `wsu:Timestamp`
+  with a 5-minute validity window and includes it plus the SOAP Body in the very same
+  `ds:Signature` as the attachments - one signature, one keystore, instead of combining this
+  plugin with SoapUI's native Outgoing WSS "Sign"/"Timestamp" entries.
 
 ## Building
 
@@ -69,8 +76,10 @@ also install the jar directly if you prefer a GUI.
 2. In the Navigator tree, right-click a Request that has one or more attachments - either a plain
    Request under **Interfaces > Service > Operation**, or a SOAP Test Request step inside a
    TestCase - and choose **Sign Attachments...**.
-3. Pick the keystore, the key alias and its password, the transform, and which attachments to sign,
-   then click **Sign Now** - the request's XML is updated immediately with the signature.
+3. Pick the keystore, the key alias and its password, the transform, and which attachments to sign;
+   check **"Also sign message Body + Timestamp"** if you also want standard WS-Security coverage of
+   the SOAP Body in the same signature. Click **Sign Now** - the request's XML is updated
+   immediately with the signature.
 4. To have this happen automatically on every send instead, check **"Automatically sign every
    attachment on every send"** and click **Save Settings**. This is a project-wide setting (stored
    as project custom properties named `AttachmentSigning.*`, visible/editable under the project's
@@ -93,3 +102,6 @@ also install the jar directly if you prefer a GUI.
   an on-demand "Sign Now").
 - Tested against SoapUI's WSS4J 1.6.17 / log4j2 2.26.0 dependency versions; if your SoapUI ships
   materially different versions of these, adjust the properties in `pom.xml` to match.
+- Signing again (e.g. re-running "Sign Now" after editing attachments) adds a second
+  `BinarySecurityToken` + `ds:Signature` into the existing `wsse:Security` header rather than
+  replacing the first one; remove the old signature manually first if you don't want both.

@@ -50,9 +50,11 @@ public class AutoSignAttachmentsRequestFilter extends AbstractRequestFilter {
 
             String password = SigningConfig.getExpandedPassword(project);
             String signed = AttachmentSigner.sign(request, wssCrypto, alias, password,
-                    SigningConfig.getTransformType(project), null);
+                    SigningConfig.getTransformType(project), null,
+                    SigningConfig.isIncludeBodyAndTimestamp(project));
             request.setRequestContent(signed);
-        } catch (Exception e) {
+        } catch (Throwable e) {
+            log.error("Attachment auto-signing failed", e);
             SoapUI.logError(e);
         }
     }

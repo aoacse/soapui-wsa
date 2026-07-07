@@ -28,6 +28,9 @@ import javax.xml.crypto.dsig.spec.TransformParameterSpec;
 import java.io.StringWriter;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
@@ -41,7 +44,11 @@ import java.util.UUID;
  * Signs one or more of a {@link WsdlRequest}'s MIME attachments with a WS-Security SwA Profile 1.1
  * signature: a {@code wsse:Security} header containing an X.509 {@code BinarySecurityToken} and a
  * {@code ds:Signature} with one {@code ds:Reference} per signed attachment (URI {@code cid:...},
- * transform {@link SwaTransformType#getUri()}).
+ * transform {@link SwaTransformType#getUri()}). Optionally also covers the SOAP Body and a fresh
+ * {@code wsu:Timestamp} with plain Exclusive-C14N references, matching what SoapUI's own built-in
+ * "Sign" + "Timestamp" Outgoing WSS entries produce - so the message-level and attachment
+ * signatures can be combined into a single {@code ds:Signature} instead of requiring both
+ * mechanisms to be configured and applied separately.
  *
  * <p>The private key and certificate are taken from one of the project's existing WS-Security
  * Keystores ({@link WssCrypto}), so key material is managed exactly the way SoapUI's built-in
@@ -49,19 +56,27 @@ import java.util.UUID;
  */
 public final class AttachmentSigner {
 
+    private static final long TIMESTAMP_TTL_SECONDS = 300;
+    private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+            .withZone(java.time.ZoneOffset.UTC);
+
     private AttachmentSigner() {
     }
 
     /**
-     * Signs the given request's attachments in place and returns the resulting request XML; does
-     * not itself call {@code request.setRequestContent(...)} so callers can decide how to handle
-     * failures.
+     * Signs the given request's attachments (and, if requested, the Body and a Timestamp) in
+     * place and returns the resulting request XML; does not itself call {@code
+     * request.setRequestContent(...)} so callers can decide how to handle failures.
      *
      * @param contentIdsToSign Content-IDs (with or without angle brackets) of the attachments to
      *                          sign, or {@code null}/empty to sign every attachment on the request.
+     * @param includeBodyAndTimestamp if true, also adds (or reuses an existing) {@code
+     *                          wsu:Timestamp} and signs it together with the SOAP Body, in the
+     *                          same {@code ds:Signature} as the attachments.
      */
     public static String sign(WsdlRequest request, WssCrypto wssCrypto, String alias, String password,
-                               SwaTransformType transformType, Collection<String> contentIdsToSign) throws Exception {
+                               SwaTransformType transformType, Collection<String> contentIdsToSign,
+                               boolean includeBodyAndTimestamp) throws Exception {
         Attachment[] attachments = request.getAttachments();
         if (attachments == null || attachments.length == 0) {
             throw new AttachmentSigningException("Request has no attachments to sign");
@@ -133,12 +148,24 @@ public final class AttachmentSigner {
 
         XMLSignatureFactory fac = XMLSignatureFactory.getInstance("DOM");
         DigestMethod digestMethod = fac.newDigestMethod(SwaConstants.DIGEST_SHA256, null);
+        Transform exclusiveC14nTransform = fac.newTransform(CanonicalizationMethod.EXCLUSIVE, (TransformParameterSpec) null);
 
         List<Reference> references = new ArrayList<>();
         for (String cid : idsToSign) {
             Transform transform = fac.newTransform(transformType.getUri(), (TransformParameterSpec) null);
             references.add(fac.newReference(AttachmentURIDereferencer.toCidUri(cid), digestMethod,
                     Collections.singletonList(transform), null, null));
+        }
+
+        if (includeBodyAndTimestamp) {
+            String bodyId = getOrCreateWsuId(body, "id-");
+            references.add(fac.newReference("#" + bodyId, digestMethod,
+                    Collections.singletonList(exclusiveC14nTransform), null, null));
+
+            Element timestamp = getOrCreateTimestamp(doc, security);
+            String timestampId = timestamp.getAttributeNS(SwaConstants.WSU_NS, "Id");
+            references.add(fac.newReference("#" + timestampId, digestMethod,
+                    Collections.singletonList(exclusiveC14nTransform), null, null));
         }
 
         CanonicalizationMethod c14n = fac.newCanonicalizationMethod(
@@ -151,7 +178,7 @@ public final class AttachmentSigner {
 
         XMLSignature signature = fac.newXMLSignature(signedInfo, keyInfo);
         DOMSignContext signContext = new DOMSignContext(privateKey, security);
-        signContext.setURIDereferencer(new AttachmentURIDereferencer(byContentId));
+        signContext.setURIDereferencer(new AttachmentURIDereferencer(byContentId, fac.getURIDereferencer()));
         signContext.putNamespacePrefix(XMLSignature.XMLNS, "ds");
         signature.sign(signContext);
 
@@ -180,6 +207,42 @@ public final class AttachmentSigner {
                     + wssCrypto.getLabel() + "'");
         }
         return certs[0];
+    }
+
+    private static String getOrCreateWsuId(Element element, String idPrefix) {
+        String id = element.getAttributeNS(SwaConstants.WSU_NS, "Id");
+        if (id == null || id.isEmpty()) {
+            id = idPrefix + UUID.randomUUID();
+            element.setAttributeNS(SwaConstants.WSU_NS, "wsu:Id", id);
+        }
+        // Freshly parsed DOMs have no DTD/schema, so nothing marks wsu:Id as an XML ID attribute;
+        // without this, the default same-document URIDereferencer cannot resolve "#..." references.
+        element.setIdAttributeNS(SwaConstants.WSU_NS, "Id", true);
+        return id;
+    }
+
+    private static Element getOrCreateTimestamp(Document doc, Element security) {
+        Element timestamp = firstChildElementNS(security, SwaConstants.WSU_NS, "Timestamp");
+        if (timestamp == null) {
+            Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+            Instant expires = now.plusSeconds(TIMESTAMP_TTL_SECONDS);
+
+            timestamp = doc.createElementNS(SwaConstants.WSU_NS, "wsu:Timestamp");
+            timestamp.setAttributeNS(SwaConstants.WSU_NS, "wsu:Id", "TS-" + UUID.randomUUID());
+
+            Element created = doc.createElementNS(SwaConstants.WSU_NS, "wsu:Created");
+            created.setTextContent(TIMESTAMP_FORMAT.format(now));
+            timestamp.appendChild(created);
+
+            Element expiresElement = doc.createElementNS(SwaConstants.WSU_NS, "wsu:Expires");
+            expiresElement.setTextContent(TIMESTAMP_FORMAT.format(expires));
+            timestamp.appendChild(expiresElement);
+
+            security.insertBefore(timestamp, security.getFirstChild());
+        }
+        // See getOrCreateWsuId() - required even when reusing an existing Timestamp parsed fresh.
+        timestamp.setIdAttributeNS(SwaConstants.WSU_NS, "Id", true);
+        return timestamp;
     }
 
     private static Element firstChildElementNS(Element parent, String namespaceUri, String localName) {
