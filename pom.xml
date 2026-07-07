@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>de.sensler.soapui</groupId>
+    <artifactId>soapui-attachment-signing-plugin</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <name>SoapUI Attachment Signing Plugin</name>
+    <description>
+        Signs MIME/MTOM attachments of SOAP requests using a WS-Security SwA Profile 1.1
+        (SOAP-with-Attachments) XML signature, either on demand or automatically on every send.
+    </description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+
+        <!--
+          Must match the SoapUI installation the plugin will be loaded into. Override with
+          -Dsoapui.version=x.y.z, or (recommended, see README) install your local SoapUI's own
+          soapui-x.y.z.jar into your local repository with mvn install:install-file instead of
+          relying on this coordinate resolving from the soapUI Repository below.
+        -->
+        <soapui.version>5.9.0</soapui.version>
+        <wss4j.version>1.6.17</wss4j.version>
+        <log4j2.version>2.26.0</log4j2.version>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>soapui-repository</id>
+            <url>https://www.soapui.org/repository/maven2/</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <!-- Provided by the SoapUI runtime the plugin jar is dropped into; never bundled. -->
+        <dependency>
+            <groupId>com.smartbear.soapui</groupId>
+            <artifactId>soapui</artifactId>
+            <version>${soapui.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.ws.security</groupId>
+            <artifactId>wss4j</artifactId>
+            <version>${wss4j.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>${log4j2.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}-${project.version}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>
