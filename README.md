@@ -10,9 +10,11 @@ It plugs into the free/open-source **SoapUI** (not ReadyAPI) using SoapUI's publ
 
 ## Features
 
-- **Sign Attachments...** action on SOAP Test Request steps (right-click a Request step, or use
-  its toolbar) - lets you pick a keystore/alias, a transform, which attachments to sign, and sign
-  immediately.
+- **Sign Attachments...** context-menu action in the Navigator tree, on both:
+  - a plain interface-level Request (**Interfaces > Service > Operation > Request N**), and
+  - a SOAP Test Request step inside a TestCase.
+
+  Lets you pick a keystore/alias, a transform, which attachments to sign, and sign immediately.
 - **Automatic signing on send**: the same dialog has a checkbox to sign every attachment of every
   request in the project automatically, right before it goes out over HTTP(S).
 - Reuses SoapUI's existing **Project > WS-Security Configurations > Keystores** so key material is
@@ -64,8 +66,9 @@ also install the jar directly if you prefer a GUI.
 
 1. Configure a keystore under **Project > WS-Security Configurations > Keystores** (this is a
    built-in SoapUI feature; the plugin does not add its own keystore UI).
-2. Open a SOAP Test Request step that has one or more attachments, right-click it (or use its
-   toolbar) and choose **Sign Attachments...**.
+2. In the Navigator tree, right-click a Request that has one or more attachments - either a plain
+   Request under **Interfaces > Service > Operation**, or a SOAP Test Request step inside a
+   TestCase - and choose **Sign Attachments...**.
 3. Pick the keystore, the key alias and its password, the transform, and which attachments to sign,
    then click **Sign Now** - the request's XML is updated immediately with the signature.
 4. To have this happen automatically on every send instead, check **"Automatically sign every
