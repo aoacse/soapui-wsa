@@ -5,7 +5,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>de.sensler.soapui</groupId>
+    <groupId>com.artofarc.soapui.plugins</groupId>
     <artifactId>soapui-attachment-signing-plugin</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>

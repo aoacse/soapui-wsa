@@ -1,4 +1,4 @@
-package de.sensler.soapui.attachmentsigning.core;
+package com.artofarc.soapui.attachmentsigning.core;
 
 import com.eviware.soapui.impl.wsdl.WsdlRequest;
 import com.eviware.soapui.impl.wsdl.support.wss.WssCrypto;

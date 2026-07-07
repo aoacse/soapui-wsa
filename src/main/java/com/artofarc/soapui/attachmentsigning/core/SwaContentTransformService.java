@@ -1,4 +1,4 @@
-package de.sensler.soapui.attachmentsigning.core;
+package com.artofarc.soapui.attachmentsigning.core;
 
 /**
  * Implements the "Attachment-Content-Signature-Transform": the digest input is exactly the

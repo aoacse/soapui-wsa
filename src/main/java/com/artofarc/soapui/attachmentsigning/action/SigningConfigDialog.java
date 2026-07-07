@@ -1,13 +1,13 @@
-package de.sensler.soapui.attachmentsigning.action;
+package com.artofarc.soapui.attachmentsigning.action;
 
 import com.eviware.soapui.impl.wsdl.WsdlProject;
 import com.eviware.soapui.impl.wsdl.WsdlRequest;
 import com.eviware.soapui.impl.wsdl.support.wss.WssCrypto;
 import com.eviware.soapui.model.iface.Attachment;
 import com.eviware.soapui.support.UISupport;
-import de.sensler.soapui.attachmentsigning.core.AttachmentSigner;
-import de.sensler.soapui.attachmentsigning.core.SigningConfig;
-import de.sensler.soapui.attachmentsigning.core.SwaTransformType;
+import com.artofarc.soapui.attachmentsigning.core.AttachmentSigner;
+import com.artofarc.soapui.attachmentsigning.core.SigningConfig;
+import com.artofarc.soapui.attachmentsigning.core.SwaTransformType;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;

@@ -1,4 +1,4 @@
-package de.sensler.soapui.attachmentsigning.core;
+package com.artofarc.soapui.attachmentsigning.core;
 
 /**
  * Namespaces and algorithm URIs used for WS-Security SOAP-with-Attachments (SwA) Profile 1.1

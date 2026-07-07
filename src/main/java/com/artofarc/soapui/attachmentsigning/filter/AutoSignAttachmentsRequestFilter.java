@@ -1,4 +1,4 @@
-package de.sensler.soapui.attachmentsigning.filter;
+package com.artofarc.soapui.attachmentsigning.filter;
 
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.impl.wsdl.WsdlProject;
@@ -8,8 +8,8 @@ import com.eviware.soapui.impl.wsdl.support.wss.WssCrypto;
 import com.eviware.soapui.impl.wsdl.submit.filters.AbstractRequestFilter;
 import com.eviware.soapui.model.iface.SubmitContext;
 import com.eviware.soapui.plugins.auto.PluginRequestFilter;
-import de.sensler.soapui.attachmentsigning.core.AttachmentSigner;
-import de.sensler.soapui.attachmentsigning.core.SigningConfig;
+import com.artofarc.soapui.attachmentsigning.core.AttachmentSigner;
+import com.artofarc.soapui.attachmentsigning.core.SigningConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

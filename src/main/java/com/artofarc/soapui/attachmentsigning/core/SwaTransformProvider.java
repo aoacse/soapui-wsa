@@ -1,4 +1,4 @@
-package de.sensler.soapui.attachmentsigning.core;
+package com.artofarc.soapui.attachmentsigning.core;
 
 import java.security.Provider;
 import java.util.Collections;

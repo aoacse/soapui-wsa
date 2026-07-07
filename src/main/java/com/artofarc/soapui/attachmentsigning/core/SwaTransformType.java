@@ -1,4 +1,4 @@
-package de.sensler.soapui.attachmentsigning.core;
+package com.artofarc.soapui.attachmentsigning.core;
 
 /**
  * The two Reference transforms defined by the WS-Security SwA Profile 1.1 for binding a

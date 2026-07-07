@@ -1,4 +1,4 @@
-package de.sensler.soapui.attachmentsigning.core;
+package com.artofarc.soapui.attachmentsigning.core;
 
 import javax.xml.crypto.Data;
 import javax.xml.crypto.MarshalException;

@@ -1,4 +1,4 @@
-package de.sensler.soapui.attachmentsigning.action;
+package com.artofarc.soapui.attachmentsigning.action;
 
 import com.eviware.soapui.impl.wsdl.WsdlProject;
 import com.eviware.soapui.impl.wsdl.WsdlRequest;

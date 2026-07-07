@@ -1,4 +1,4 @@
-package de.sensler.soapui.attachmentsigning.core;
+package com.artofarc.soapui.attachmentsigning.core;
 
 /** Raised for configuration/usage errors detected while signing attachments (missing key, etc). */
 public class AttachmentSigningException extends Exception {
