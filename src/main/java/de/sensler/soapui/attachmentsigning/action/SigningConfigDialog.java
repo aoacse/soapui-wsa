@@ -206,7 +206,7 @@ public class SigningConfigDialog extends JDialog {
 
         try {
             UISupport.setHourglassCursor();
-            String signed = AttachmentSigner.sign(request, wssCrypto, aliasField.getText(),
+            String signed = AttachmentSigner.sign(request.getRequestContent(), request, wssCrypto, aliasField.getText(),
                     new String(passwordField.getPassword()),
                     (SwaTransformType) transformCombo.getSelectedItem(), selectedContentIds,
                     includeBodyAndTimestampCheckBox.isSelected());

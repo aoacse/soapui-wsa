@@ -19,7 +19,14 @@ It plugs into the free/open-source **SoapUI** (not ReadyAPI) using SoapUI's publ
 
   Lets you pick a keystore/alias, a transform, which attachments to sign, and sign immediately.
 - **Automatic signing on send**: the same dialog has a checkbox to sign every attachment of every
-  request in the project automatically, right before it goes out over HTTP(S).
+  request in the project automatically, right before it goes out over HTTP(S) - and it does so
+  *after* SoapUI's own native Outgoing WSS ("Sign"/"Timestamp") has already run for that request,
+  reusing the `wsse:Security` header it created rather than ignoring or overwriting it. That means
+  if you already have a project-level WS-Security configuration for signing the Body/Timestamp,
+  you can leave it exactly as-is and only rely on this plugin for the attachment part (leave
+  "Also sign message Body + Timestamp", below, unchecked in that case). This per-send signing is
+  transient - it affects only what actually goes out on the wire, not the request as saved in the
+  editor, so sending the same request repeatedly does not keep stacking up signatures.
 - Reuses SoapUI's existing **Project > WS-Security Configurations > Keystores** so key material is
   managed exactly like it already is for SoapUI's built-in body-signing feature - no separate
   keystore UI to configure.
@@ -85,6 +92,9 @@ also install the jar directly if you prefer a GUI.
    as project custom properties named `AttachmentSigning.*`, visible/editable under the project's
    Custom Properties tab). The stored password supports SoapUI property expansion (e.g.
    `${#Project#myKeyPassword}`) if you don't want it stored in the project file in plain text.
+   If the project already has its own Outgoing WSS "Sign"/"Timestamp" configuration for the Body,
+   leave "Also sign message Body + Timestamp" unchecked here - that existing configuration keeps
+   running exactly as before, and this plugin only adds the attachment signature alongside it.
 
 ## Limitations
 

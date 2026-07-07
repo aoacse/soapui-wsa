@@ -64,18 +64,24 @@ public final class AttachmentSigner {
     }
 
     /**
-     * Signs the given request's attachments (and, if requested, the Body and a Timestamp) in
-     * place and returns the resulting request XML; does not itself call {@code
-     * request.setRequestContent(...)} so callers can decide how to handle failures.
+     * Signs the given attachments into {@code requestXml} and returns the resulting XML. Takes the
+     * XML to sign as an explicit parameter - rather than reading {@code request.getRequestContent()}
+     * itself - so callers can sign whatever the actual outgoing content currently is: the request
+     * editor's persisted content (manual "Sign Now"), or the transient per-submission copy held in
+     * the {@code SubmitContext} that other request filters (notably SoapUI's own native
+     * "Sign"+"Timestamp" Outgoing WSS, applied earlier in the same submission) may have already
+     * added a {@code wsse:Security} header to - which this method then reuses and adds an
+     * attachment {@code ds:Signature} into, rather than clobbering or ignoring it.
      *
      * @param contentIdsToSign Content-IDs (with or without angle brackets) of the attachments to
      *                          sign, or {@code null}/empty to sign every attachment on the request.
      * @param includeBodyAndTimestamp if true, also adds (or reuses an existing) {@code
      *                          wsu:Timestamp} and signs it together with the SOAP Body, in the
-     *                          same {@code ds:Signature} as the attachments.
+     *                          same {@code ds:Signature} as the attachments. Leave false if this is
+     *                          already covered by SoapUI's own Outgoing WSS configuration.
      */
-    public static String sign(WsdlRequest request, WssCrypto wssCrypto, String alias, String password,
-                               SwaTransformType transformType, Collection<String> contentIdsToSign,
+    public static String sign(String requestXml, WsdlRequest request, WssCrypto wssCrypto, String alias,
+                               String password, SwaTransformType transformType, Collection<String> contentIdsToSign,
                                boolean includeBodyAndTimestamp) throws Exception {
         Attachment[] attachments = request.getAttachments();
         if (attachments == null || attachments.length == 0) {
@@ -112,7 +118,7 @@ public final class AttachmentSigner {
 
         SwaTransformProvider.install();
 
-        Document doc = XmlUtils.parseXml(request.getRequestContent());
+        Document doc = XmlUtils.parseXml(requestXml);
         Element envelope = doc.getDocumentElement();
         String soapNs = envelope.getNamespaceURI();
 
