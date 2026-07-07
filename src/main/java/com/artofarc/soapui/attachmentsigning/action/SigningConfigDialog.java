@@ -3,9 +3,11 @@ package com.artofarc.soapui.attachmentsigning.action;
 import com.eviware.soapui.impl.wsdl.WsdlProject;
 import com.eviware.soapui.impl.wsdl.WsdlRequest;
 import com.eviware.soapui.impl.wsdl.support.wss.WssCrypto;
+import com.eviware.soapui.impl.wsdl.support.wss.entries.SignatureEntry;
 import com.eviware.soapui.model.iface.Attachment;
 import com.eviware.soapui.support.UISupport;
 import com.artofarc.soapui.attachmentsigning.core.AttachmentSigner;
+import com.artofarc.soapui.attachmentsigning.core.NativeSignatureSource;
 import com.artofarc.soapui.attachmentsigning.core.SigningConfig;
 import com.artofarc.soapui.attachmentsigning.core.SwaTransformType;
 
@@ -41,6 +43,7 @@ public class SigningConfigDialog extends JDialog {
     private JComboBox<String> cryptoCombo;
     private JTextField aliasField;
     private JPasswordField passwordField;
+    private JLabel sourceLabel;
     private JComboBox<SwaTransformType> transformCombo;
     private JCheckBox includeBodyAndTimestampCheckBox;
     private JCheckBox autoSignCheckBox;
@@ -90,6 +93,13 @@ public class SigningConfigDialog extends JDialog {
         c.gridx = 1;
         c.gridy = row;
         form.add(passwordField, c);
+        row++;
+
+        c.gridx = 1;
+        c.gridy = row;
+        sourceLabel = new JLabel(" ");
+        sourceLabel.setFont(sourceLabel.getFont().deriveFont(sourceLabel.getFont().getSize2D() - 1f));
+        form.add(sourceLabel, c);
         row++;
 
         c.gridx = 0;
@@ -163,11 +173,28 @@ public class SigningConfigDialog extends JDialog {
 
     private void loadFromConfig() {
         String crypto = SigningConfig.get(project, SigningConfig.CRYPTO, null);
+        String alias = SigningConfig.get(project, SigningConfig.ALIAS, null);
+        String password = SigningConfig.get(project, SigningConfig.PASSWORD, null);
+
+        if (crypto == null && alias == null) {
+            // Nothing configured for this plugin yet - default to whatever keystore/alias/password
+            // this request's own Outgoing WSS "Signature" entry already uses, so the common case of
+            // signing with the same identity as native WSS needs no separate setup. Still just a
+            // starting point in the fields below; "Save Settings" persists whatever ends up there.
+            SignatureEntry nativeEntry = NativeSignatureSource.findSignatureEntry(request);
+            if (nativeEntry != null) {
+                crypto = nativeEntry.getCrypto();
+                alias = nativeEntry.getUsername();
+                password = nativeEntry.getPassword();
+                sourceLabel.setText("(taken from Outgoing WSS \"" + request.getOutgoingWss() + "\")");
+            }
+        }
+
         if (crypto != null) {
             cryptoCombo.setSelectedItem(crypto);
         }
-        aliasField.setText(SigningConfig.get(project, SigningConfig.ALIAS, ""));
-        passwordField.setText(SigningConfig.get(project, SigningConfig.PASSWORD, ""));
+        aliasField.setText(alias == null ? "" : alias);
+        passwordField.setText(password == null ? "" : password);
         transformCombo.setSelectedItem(SigningConfig.getTransformType(project));
         includeBodyAndTimestampCheckBox.setSelected(SigningConfig.isIncludeBodyAndTimestamp(project));
         autoSignCheckBox.setSelected(SigningConfig.isAutoSignEnabled(project));

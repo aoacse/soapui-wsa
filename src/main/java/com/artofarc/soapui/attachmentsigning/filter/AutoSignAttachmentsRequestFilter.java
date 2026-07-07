@@ -7,8 +7,12 @@ import com.eviware.soapui.impl.wsdl.submit.transports.http.BaseHttpRequestTransp
 import com.eviware.soapui.impl.wsdl.support.wss.WssCrypto;
 import com.eviware.soapui.impl.wsdl.submit.filters.AbstractRequestFilter;
 import com.eviware.soapui.model.iface.SubmitContext;
+import com.eviware.soapui.impl.wsdl.support.wss.entries.SignatureEntry;
+import com.eviware.soapui.model.propertyexpansion.DefaultPropertyExpansionContext;
+import com.eviware.soapui.model.propertyexpansion.PropertyExpansionContext;
 import com.eviware.soapui.plugins.auto.PluginRequestFilter;
 import com.artofarc.soapui.attachmentsigning.core.AttachmentSigner;
+import com.artofarc.soapui.attachmentsigning.core.NativeSignatureSource;
 import com.artofarc.soapui.attachmentsigning.core.SigningConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,8 +54,25 @@ public class AutoSignAttachmentsRequestFilter extends AbstractRequestFilter {
 
             String cryptoName = SigningConfig.get(project, SigningConfig.CRYPTO, null);
             String alias = SigningConfig.get(project, SigningConfig.ALIAS, null);
+            String password = SigningConfig.getExpandedPassword(project);
+
             if (cryptoName == null || alias == null) {
-                log.warn("Attachment auto-signing is enabled but no keystore/alias is configured; skipping");
+                // Not explicitly configured for this plugin - fall back to whatever keystore/alias
+                // the request's own Outgoing WSS "Signature" entry already uses, so attachment
+                // signing works out of the box wherever native WSS signing is already set up.
+                SignatureEntry nativeEntry = NativeSignatureSource.findSignatureEntry(request);
+                if (nativeEntry != null) {
+                    cryptoName = nativeEntry.getCrypto();
+                    alias = nativeEntry.getUsername();
+                    PropertyExpansionContext expansionContext = new DefaultPropertyExpansionContext(project);
+                    password = expansionContext.expand(nativeEntry.getPassword());
+                }
+            }
+
+            if (cryptoName == null || alias == null) {
+                log.warn("Attachment auto-signing is enabled but no keystore/alias is configured "
+                        + "(neither explicitly for this plugin, nor via the request's Outgoing WSS "
+                        + "Signature entry); skipping");
                 return;
             }
             WssCrypto wssCrypto = project.getWssContainer().getCryptoByName(cryptoName);
@@ -65,7 +86,6 @@ public class AutoSignAttachmentsRequestFilter extends AbstractRequestFilter {
                 requestXml = request.getRequestContent();
             }
 
-            String password = SigningConfig.getExpandedPassword(project);
             String signed = AttachmentSigner.sign(requestXml, request, wssCrypto, alias, password,
                     SigningConfig.getTransformType(project), null,
                     SigningConfig.isIncludeBodyAndTimestamp(project));

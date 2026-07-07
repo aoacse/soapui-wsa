@@ -29,7 +29,11 @@ It plugs into the free/open-source **SoapUI** (not ReadyAPI) using SoapUI's publ
   editor, so sending the same request repeatedly does not keep stacking up signatures.
 - Reuses SoapUI's existing **Project > WS-Security Configurations > Keystores** so key material is
   managed exactly like it already is for SoapUI's built-in body-signing feature - no separate
-  keystore UI to configure.
+  keystore UI to configure. If the request already has an Outgoing WSS configuration with a
+  "Signature" entry (i.e. native WSS signing is already set up for it), both the **Sign
+  Attachments...** dialog and automatic signing default to that entry's keystore/alias/password
+  automatically - nothing to re-enter. This only fills in the *default*: the dialog's fields can
+  still be edited and saved to use a different identity for the attachment signature.
 - Two transform modes:
   - **Content** (default, recommended): digests only the attachment's payload bytes. Robust and
     interoperable.
