@@ -112,6 +112,9 @@ also install the jar directly if you prefer a GUI.
   an on-demand "Sign Now").
 - Tested against SoapUI's WSS4J 1.6.17 / log4j2 2.26.0 dependency versions; if your SoapUI ships
   materially different versions of these, adjust the properties in `pom.xml` to match.
-- Signing again (e.g. re-running "Sign Now" after editing attachments) adds a second
-  `BinarySecurityToken` + `ds:Signature` into the existing `wsse:Security` header rather than
-  replacing the first one; remove the old signature manually first if you don't want both.
+- Signing again (e.g. re-running "Sign Now", or automatic signing alongside SoapUI's native
+  Outgoing WSS) adds another `ds:Signature` into the existing `wsse:Security` header rather than
+  replacing an earlier one - by design, so this plugin's attachment signature can coexist with a
+  separately-configured Body/Timestamp signature. It reuses an existing `BinarySecurityToken`
+  instead of duplicating it when the certificate is identical, so you normally only get one BST
+  even with two signatures; only if a *different* keystore/alias is used do you get a second BST.

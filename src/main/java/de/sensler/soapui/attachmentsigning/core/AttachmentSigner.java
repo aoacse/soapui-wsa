@@ -138,13 +138,7 @@ public final class AttachmentSigner {
             header.insertBefore(security, header.getFirstChild());
         }
 
-        String bstId = "X509-" + UUID.randomUUID();
-        Element bst = doc.createElementNS(SwaConstants.WSSE_NS, "wsse:BinarySecurityToken");
-        bst.setAttribute("EncodingType", SwaConstants.BASE64_BINARY_ENCODING_TYPE);
-        bst.setAttribute("ValueType", SwaConstants.X509_V3_VALUE_TYPE);
-        bst.setAttributeNS(SwaConstants.WSU_NS, "wsu:Id", bstId);
-        bst.setTextContent(Base64.getEncoder().encodeToString(certificate.getEncoded()));
-        security.appendChild(bst);
+        String bstId = findOrCreateBst(doc, security, certificate);
 
         Element str = doc.createElementNS(SwaConstants.WSSE_NS, "wsse:SecurityTokenReference");
         Element strRef = doc.createElementNS(SwaConstants.WSSE_NS, "wsse:Reference");
@@ -213,6 +207,40 @@ public final class AttachmentSigner {
                     + wssCrypto.getLabel() + "'");
         }
         return certs[0];
+    }
+
+    /**
+     * Reuses an existing {@code wsse:BinarySecurityToken} for the same certificate (e.g. one
+     * SoapUI's native Outgoing WSS already put there for its own Body/Timestamp signature) rather
+     * than inserting a byte-identical duplicate, and returns its {@code wsu:Id}. Creates a new one
+     * only if none matches.
+     */
+    private static String findOrCreateBst(Document doc, Element security, X509Certificate certificate)
+            throws Exception {
+        String certBase64 = Base64.getEncoder().encodeToString(certificate.getEncoded());
+
+        NodeList children = security.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            Node node = children.item(i);
+            if (node.getNodeType() == Node.ELEMENT_NODE
+                    && "BinarySecurityToken".equals(node.getLocalName())
+                    && SwaConstants.WSSE_NS.equals(node.getNamespaceURI())) {
+                Element existingBst = (Element) node;
+                String existingBase64 = existingBst.getTextContent().replaceAll("\\s+", "");
+                if (certBase64.equals(existingBase64)) {
+                    return getOrCreateWsuId(existingBst, "X509-");
+                }
+            }
+        }
+
+        String bstId = "X509-" + UUID.randomUUID();
+        Element bst = doc.createElementNS(SwaConstants.WSSE_NS, "wsse:BinarySecurityToken");
+        bst.setAttribute("EncodingType", SwaConstants.BASE64_BINARY_ENCODING_TYPE);
+        bst.setAttribute("ValueType", SwaConstants.X509_V3_VALUE_TYPE);
+        bst.setAttributeNS(SwaConstants.WSU_NS, "wsu:Id", bstId);
+        bst.setTextContent(certBase64);
+        security.appendChild(bst);
+        return bstId;
     }
 
     private static String getOrCreateWsuId(Element element, String idPrefix) {
