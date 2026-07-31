@@ -3,6 +3,7 @@ package com.artofarc.soapui.attachmentsigning;
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.plugins.PluginAdapter;
 import com.eviware.soapui.plugins.PluginConfiguration;
+import com.eviware.soapui.ui.desktop.SoapUIDesktop;
 import com.artofarc.soapui.attachmentsigning.action.RequestToolbarButtonInjector;
 
 /**
@@ -20,7 +21,19 @@ public class PluginConfig extends PluginAdapter {
     public void initialize() {
         super.initialize();
         // Not a SoapUIListener, so it can't be auto-registered via @ListenerConfiguration like the
-        // plugin's other listeners - wire it up manually here instead.
-        SoapUI.getDesktop().addDesktopListener(new RequestToolbarButtonInjector());
+        // plugin's other listeners - wire it up manually here instead. Guarded so that if this ever
+        // fails (e.g. the desktop isn't available yet at this point in some SoapUI version/mode),
+        // it only costs the toolbar button, not the rest of the plugin (the context-menu action and
+        // auto-signing don't depend on this).
+        try {
+            SoapUIDesktop desktop = SoapUI.getDesktop();
+            if (desktop != null) {
+                desktop.addDesktopListener(new RequestToolbarButtonInjector());
+            } else {
+                SoapUI.log("Attachment Signing Plugin: no desktop available yet, toolbar button will not be added");
+            }
+        } catch (Throwable e) {
+            SoapUI.logError(e);
+        }
     }
 }

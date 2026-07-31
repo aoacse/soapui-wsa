@@ -136,4 +136,6 @@ also install the jar directly if you prefer a GUI.
 - The toolbar button relies on the request editor's Submit button living directly inside the
   toolbar container (true for every SoapUI version this was checked against, via public API only -
   no reflection into internals) - if a future SoapUI restructures that panel, the button may simply
-  stop appearing rather than error; the Navigator context-menu action is unaffected either way.
+  stop appearing rather than error; the Navigator context-menu action is unaffected either way. Any
+  failure to add it is caught and written to SoapUI's Log panel (search for "Attachment Signing" or
+  "toolbar button") rather than failing silently or affecting the rest of the plugin.
