@@ -70,14 +70,14 @@ public class AutoSignAttachmentsRequestFilter extends AbstractRequestFilter {
             }
 
             if (cryptoName == null || alias == null) {
-                log.warn("Attachment auto-signing is enabled but no keystore/alias is configured "
+                warn("Attachment auto-signing is enabled but no keystore/alias is configured "
                         + "(neither explicitly for this plugin, nor via the request's Outgoing WSS "
                         + "Signature entry); skipping");
                 return;
             }
             WssCrypto wssCrypto = project.getWssContainer().getCryptoByName(cryptoName);
             if (wssCrypto == null) {
-                log.warn("Attachment auto-signing: keystore '" + cryptoName + "' not found; skipping");
+                warn("Attachment auto-signing: keystore '" + cryptoName + "' not found; skipping");
                 return;
             }
 
@@ -94,5 +94,11 @@ public class AutoSignAttachmentsRequestFilter extends AbstractRequestFilter {
             log.error("Attachment auto-signing failed", e);
             SoapUI.logError(e);
         }
+    }
+
+    private static void warn(String message) {
+        log.warn(message);
+        // See AttachmentSigner.sign() for why this is needed in addition to the log4j2 call above.
+        SoapUI.log(message);
     }
 }

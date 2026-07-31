@@ -1,5 +1,6 @@
 package com.artofarc.soapui.attachmentsigning.core;
 
+import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.impl.wsdl.WsdlRequest;
 import com.eviware.soapui.impl.wsdl.support.wss.WssCrypto;
 import com.eviware.soapui.model.iface.Attachment;
@@ -186,9 +187,14 @@ public final class AttachmentSigner {
         signContext.putNamespacePrefix(XMLSignature.XMLNS, "ds");
         signature.sign(signContext);
 
-        log.info("Signed attachment(s) [" + String.join(", ", idsToSign) + "] of request '" + request.getName()
+        String summary = "Signed attachment(s) [" + String.join(", ", idsToSign) + "] of request '" + request.getName()
                 + "' using transform " + transformType + ", keystore '" + wssCrypto.getLabel() + "', alias '" + alias
-                + "'" + (includeBodyAndTimestamp ? " (also covering Body + Timestamp)" : ""));
+                + "'" + (includeBodyAndTimestamp ? " (also covering Body + Timestamp)" : "");
+        log.info(summary);
+        // SoapUI.log(...) goes straight to the visible Log panel regardless of log4j2 level/appender
+        // configuration for this (unconfigured, third-party) logger category - log.info() above may
+        // not actually be visible anywhere depending on that configuration, so don't rely on it alone.
+        SoapUI.log(summary);
 
         StringWriter writer = new StringWriter();
         XmlUtils.serialize(doc, writer);

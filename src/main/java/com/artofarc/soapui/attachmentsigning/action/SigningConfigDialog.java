@@ -1,5 +1,6 @@
 package com.artofarc.soapui.attachmentsigning.action;
 
+import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.impl.wsdl.WsdlProject;
 import com.eviware.soapui.impl.wsdl.WsdlRequest;
 import com.eviware.soapui.impl.wsdl.support.wss.WssCrypto;
@@ -246,6 +247,7 @@ public class SigningConfigDialog extends JDialog {
                     + (includeBodyAndTimestampCheckBox.isSelected() ? " plus Body + Timestamp." : "."));
         } catch (Throwable e) {
             log.error("Signing attachment(s) of request '" + request.getName() + "' failed", e);
+            SoapUI.logError(e);
             UISupport.showErrorMessage(e.toString());
         } finally {
             UISupport.resetCursor();
