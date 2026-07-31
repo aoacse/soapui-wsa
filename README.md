@@ -18,11 +18,14 @@ It plugs into the free/open-source **SoapUI** (not ReadyAPI) using SoapUI's publ
   - a SOAP Test Request step inside a TestCase.
 
   Lets you pick a keystore/alias, a transform, which attachments to sign, and sign immediately.
-- The same dialog is also reachable via a small 🔑 button added to the request editor's own
+- The same dialog is also reachable via a small **Sign** button added to the request editor's own
   toolbar, right next to **Submit** - no dedicated plugin hook exists for that toolbar (SoapUI
   builds it in hardcoded Java in its own desktop panel classes), so this is done by listening for
   SoapUI's `DesktopListener.desktopPanelCreated` event and inserting the button next to the panel's
-  own (public) Submit button when a SOAP request editor opens.
+  own (public) Submit button when a SOAP request editor opens. Plugins are initialized before
+  SoapUI's real desktop UI exists, so registering that listener is deferred (polling roughly twice
+  a second, for up to a minute) until `SoapUI.getDesktop()` stops returning the startup-time
+  `NullDesktop` placeholder and returns the real desktop.
 - **Automatic signing on send**: the same dialog has a checkbox to sign every attachment of every
   request in the project automatically, right before it goes out over HTTP(S) - and it does so
   *after* SoapUI's own native Outgoing WSS ("Sign"/"Timestamp") has already run for that request,
@@ -139,3 +142,7 @@ also install the jar directly if you prefer a GUI.
   stop appearing rather than error; the Navigator context-menu action is unaffected either way. Any
   failure to add it is caught and written to SoapUI's Log panel (search for "Attachment Signing" or
   "toolbar button") rather than failing silently or affecting the rest of the plugin.
+- The toolbar button also relies on `SoapUI.getDesktop()` returning a real desktop within about a
+  minute of startup, which requires an interactive SoapUI session (in command-line/headless modes
+  no real desktop is ever installed, so the plugin logs that it's giving up and moves on - the
+  context-menu action and automatic signing are both unaffected either way).
