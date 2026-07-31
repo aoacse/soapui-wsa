@@ -18,6 +18,11 @@ It plugs into the free/open-source **SoapUI** (not ReadyAPI) using SoapUI's publ
   - a SOAP Test Request step inside a TestCase.
 
   Lets you pick a keystore/alias, a transform, which attachments to sign, and sign immediately.
+- The same dialog is also reachable via a small 🔑 button added to the request editor's own
+  toolbar, right next to **Submit** - no dedicated plugin hook exists for that toolbar (SoapUI
+  builds it in hardcoded Java in its own desktop panel classes), so this is done by listening for
+  SoapUI's `DesktopListener.desktopPanelCreated` event and inserting the button next to the panel's
+  own (public) Submit button when a SOAP request editor opens.
 - **Automatic signing on send**: the same dialog has a checkbox to sign every attachment of every
   request in the project automatically, right before it goes out over HTTP(S) - and it does so
   *after* SoapUI's own native Outgoing WSS ("Sign"/"Timestamp") has already run for that request,
@@ -128,3 +133,7 @@ also install the jar directly if you prefer a GUI.
   separately-configured Body/Timestamp signature. It reuses an existing `BinarySecurityToken`
   instead of duplicating it when the certificate is identical, so you normally only get one BST
   even with two signatures; only if a *different* keystore/alias is used do you get a second BST.
+- The toolbar button relies on the request editor's Submit button living directly inside the
+  toolbar container (true for every SoapUI version this was checked against, via public API only -
+  no reflection into internals) - if a future SoapUI restructures that panel, the button may simply
+  stop appearing rather than error; the Navigator context-menu action is unaffected either way.
