@@ -29,6 +29,7 @@ public class PluginConfig extends PluginAdapter {
             SoapUIDesktop desktop = SoapUI.getDesktop();
             if (desktop != null) {
                 desktop.addDesktopListener(new RequestToolbarButtonInjector());
+                SoapUI.log("Attachment Signing Plugin: toolbar button listener registered with " + desktop.getClass().getName());
             } else {
                 SoapUI.log("Attachment Signing Plugin: no desktop available yet, toolbar button will not be added");
             }

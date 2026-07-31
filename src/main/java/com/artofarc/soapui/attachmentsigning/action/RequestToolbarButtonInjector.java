@@ -56,12 +56,21 @@ public class RequestToolbarButtonInjector extends DesktopListenerAdapter {
     }
 
     private void tryInjectButton(DesktopPanel desktopPanel) {
+        String panelClass = desktopPanel == null ? "null" : desktopPanel.getClass().getName();
+        ModelItem modelItem = desktopPanel == null ? null : desktopPanel.getModelItem();
+        String modelItemClass = modelItem == null ? "null" : modelItem.getClass().getName();
+        SoapUI.log("Attachment signing toolbar button: panel opened, class=" + panelClass
+                + ", modelItem class=" + modelItemClass);
+
         if (!(desktopPanel instanceof AbstractHttpRequestDesktopPanel)) {
+            SoapUI.log("Attachment signing toolbar button: panel is not an AbstractHttpRequestDesktopPanel, skipping");
             return;
         }
 
-        WsdlRequest request = resolveRequest(desktopPanel.getModelItem());
+        WsdlRequest request = resolveRequest(modelItem);
         if (request == null) {
+            SoapUI.log("Attachment signing toolbar button: modelItem is neither a WsdlRequest nor a "
+                    + "WsdlTestRequestStep, skipping");
             return;
         }
 
@@ -76,6 +85,7 @@ public class RequestToolbarButtonInjector extends DesktopListenerAdapter {
             return;
         }
         if (alreadyInjected(toolbar)) {
+            SoapUI.log("Attachment signing toolbar button: already present on this toolbar, skipping");
             return;
         }
 
@@ -91,6 +101,8 @@ public class RequestToolbarButtonInjector extends DesktopListenerAdapter {
         toolbar.add(signButton, submitIndex < 0 ? -1 : submitIndex + 1);
         toolbar.revalidate();
         toolbar.repaint();
+        SoapUI.log("Attachment signing toolbar button: added successfully at index " + (submitIndex + 1)
+                + " of " + toolbar.getClass().getName());
     }
 
     private static boolean alreadyInjected(Container toolbar) {
