@@ -10,6 +10,8 @@ import com.artofarc.soapui.attachmentsigning.core.AttachmentSigner;
 import com.artofarc.soapui.attachmentsigning.core.NativeSignatureSource;
 import com.artofarc.soapui.attachmentsigning.core.SigningConfig;
 import com.artofarc.soapui.attachmentsigning.core.SwaTransformType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -36,6 +38,8 @@ import java.util.List;
  * "sign automatically on every send").
  */
 public class SigningConfigDialog extends JDialog {
+
+    private static final Logger log = LogManager.getLogger(SigningConfigDialog.class);
 
     private final WsdlProject project;
     private final WsdlRequest request;
@@ -241,6 +245,7 @@ public class SigningConfigDialog extends JDialog {
             UISupport.showInfoMessage("Signed " + selectedContentIds.size() + " attachment(s)"
                     + (includeBodyAndTimestampCheckBox.isSelected() ? " plus Body + Timestamp." : "."));
         } catch (Throwable e) {
+            log.error("Signing attachment(s) of request '" + request.getName() + "' failed", e);
             UISupport.showErrorMessage(e.toString());
         } finally {
             UISupport.resetCursor();

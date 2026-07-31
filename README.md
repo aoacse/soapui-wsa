@@ -99,6 +99,10 @@ also install the jar directly if you prefer a GUI.
    If the project already has its own Outgoing WSS "Sign"/"Timestamp" configuration for the Body,
    leave "Also sign message Body + Timestamp" unchecked here - that existing configuration keeps
    running exactly as before, and this plugin only adds the attachment signature alongside it.
+5. Every successful signing (manual or automatic) writes an INFO line to SoapUI's own log (the Log
+   tab / `soapui-log4j.log`) naming the request, which attachment Content-IDs were signed, the
+   transform, and the keystore/alias used, so it can be traced after the fact. Failures are logged
+   as errors there too, in addition to the error dialog/skip-and-continue behavior described above.
 
 ## Limitations
 

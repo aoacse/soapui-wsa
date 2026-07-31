@@ -4,6 +4,8 @@ import com.eviware.soapui.impl.wsdl.WsdlRequest;
 import com.eviware.soapui.impl.wsdl.support.wss.WssCrypto;
 import com.eviware.soapui.model.iface.Attachment;
 import com.eviware.soapui.support.xml.XmlUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.ws.security.components.crypto.Crypto;
 import org.apache.ws.security.components.crypto.CryptoType;
 import org.w3c.dom.Document;
@@ -55,6 +57,8 @@ import java.util.UUID;
  * "Outgoing WS-Security Configurations" already do.
  */
 public final class AttachmentSigner {
+
+    private static final Logger log = LogManager.getLogger(AttachmentSigner.class);
 
     private static final long TIMESTAMP_TTL_SECONDS = 300;
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
@@ -181,6 +185,10 @@ public final class AttachmentSigner {
         signContext.setURIDereferencer(new AttachmentURIDereferencer(byContentId, fac.getURIDereferencer()));
         signContext.putNamespacePrefix(XMLSignature.XMLNS, "ds");
         signature.sign(signContext);
+
+        log.info("Signed attachment(s) [" + String.join(", ", idsToSign) + "] of request '" + request.getName()
+                + "' using transform " + transformType + ", keystore '" + wssCrypto.getLabel() + "', alias '" + alias
+                + "'" + (includeBodyAndTimestamp ? " (also covering Body + Timestamp)" : ""));
 
         StringWriter writer = new StringWriter();
         XmlUtils.serialize(doc, writer);
